@@ -1,0 +1,18 @@
+const livros = [
+	"A Queda <br> ",
+	"O Segredo <br>",
+	"Um Estudo Em Vermelho"
+]
+
+/* air function - função flutuante
+livros.forEach(() => {}) */
+
+/* função normal
+livros.forEach(function() {}) */
+
+/* parametros
+livros.forEach((valorAtual, indice, array)) */
+
+livros.forEach((valorAtual, posiçao) => {
+	document.write(posiçao + ": " + valorAtual);
+})
