@@ -1,0 +1,14 @@
+var prod = [];
+	prod.push('a');
+	prod.push('b');
+	prod.push('c');
+	prod.push('d');
+	
+	// prod.unshift(''); // adiciona um item na primeira prosição
+	// prod.pop(); // remove um item da última posição
+	// prod.shift(); // remove um item da primeira posição
+	// prod.splice(); // remove um item de sua escolha, mas expecificar quantos elemnetos remover ex: (elemento 2, apenas 1)
+	
+for(j = 0; j < prod.length; j++){
+	document.write(j + " " + prod[j] + "<br>");
+}
