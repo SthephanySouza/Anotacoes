@@ -25,3 +25,19 @@ alter table tbProduto drop cor;
 alter table tbProduto modify Peso decimal(4,2) not null;
 
 alter table tbProduto drop DataValidade;
+
+create database dbDeise;
+
+use dbDeise;
+
+create table tbVenda(
+	NF int primary key auto_increment,
+    DataValidade date not null
+);
+
+alter table tbVenda add Preco decimal(5,2) not null;
+alter table tbVenda add Qtd smallint;
+
+alter table tbVenda drop DataValidade;
+
+alter table tbVenda add DataVenda date default("28/03/2022");
