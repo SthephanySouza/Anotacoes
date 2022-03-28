@@ -1,0 +1,27 @@
+-- criar database
+create database dbRosalina;
+
+-- usar database
+use dbRosalina;
+
+-- criar tabela
+create table tbProduto(
+	IDProd int primary key,
+    nomeProd varchar(50) not null,
+    Qtd int,
+    DataValidade date not null,
+    Preco decimal(5,2) not null
+);
+
+-- modificar - add
+alter table tbProduto add Peso decimal(4,2);
+alter table tbProduto add Cor char(50);
+alter table tbProduto add Marca char(50) not null;
+
+-- modificar - drop
+alter table tbProduto drop cor;
+
+-- modificar - modify
+alter table tbProduto modify Peso decimal(4,2) not null;
+
+alter table tbProduto drop DataValidade;
