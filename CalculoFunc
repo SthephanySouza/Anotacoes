@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <title></title>
+    <meta charset="UTF-8" />
+    <script src="calculoFunc.js"></script>
+</head>
+
+    <body>
+        <script>
+            let resultado = calculo(5,6);
+            document.write("O resultado da multiplicaçaõ é " + resultado);
+        </script>
+</body>
+</html>
