@@ -116,7 +116,11 @@ create table tbItemVenda (
 delimiter $$
 create procedure spInsertForn(vNome varchar(200), vCNPJ decimal(14,0), vTelefone decimal(11,0))
 begin
-insert into tbFornecedor(Nome, CNPJ, Telefone) values (vNome, vCNPJ, vTelefone);
+	if not exists (select CNPJ from tbFornecedor where CNPJ = vCNPJ) then
+		insert into tbFornecedor(Nome, CNPJ, Telefone) values (vNome, vCNPJ, vTelefone);
+	else
+		select 'Já Existe';
+	end if;
 end $$
 
 delimiter $$
@@ -146,7 +150,11 @@ end $$
 delimiter $$
 create procedure spInsertProduto(vCodBarras decimal(14,0), vNome varchar(200), vValorUnitario decimal(6, 2), vQtd int)
 begin
-insert into tbProduto(CodBarras, Nome, ValorUnitario, Qtd) values (vCodBarras, vNome, vValorUnitario, vQtd); 
+	if not exists (select CodBarras from tbProduto where CodBarras = vCodBarras) then
+		insert into tbProduto(CodBarras, Nome, ValorUnitario, Qtd) values (vCodBarras, vNome, vValorUnitario, vQtd); 
+	else
+		select 'Já Existe';
+    end if;
 end $$
 
 delimiter $$
@@ -173,8 +181,6 @@ if not exists (select CEP from tbEndereco where CEP = vCEP) then
 	(vCEP, vLogradouro, @IdBairro, @IdCidade, @IdUF); 
 end if;
 end $$
-
-describe tbendereco;
 
 delimiter $$
 create procedure spInsertCliente (vNome varchar(50), vNumEnd decimal(6,0), vCompEnd varchar(50), vCEP decimal(8,0), vCPF decimal(11,0), vRG decimal(8,0), vRgDig char(1), vNasc date,
@@ -247,7 +253,14 @@ delimiter $$
 create procedure spInsertCompra(vNotaFiscal int, vFornecedor varchar(200), vDataCompra date, vCodBarras decimal(14,0), vValorItem decimal(6,2),
 vQtd int, vQtdTotal int, vValorTotal decimal(8,2))
 begin
-	
+	if not exists (select NF from tbNotaFiscal where NF = vNotaFiscal) then
+		insert into tbNotaFiscal(NF, TotalNota, DataEmissao) values (vNotaFiscal, vValorTotal, vDataCompra);
+		insert into tbCompra(NotaFiscal, DataCompra, ValorTotal, QtdTotal, Cod_Fornecedor) values (vNotaFiscal, vDataCompra, vValorTotal, vQtdTotal,
+        (select codigo from tbFornecedor where Nome = vFornecedor));
+        insert into tbItemCompra(Qtd, ValorItem, NotaFiscal, CodBarras) values (vQtd, vValorItem, vNotaFiscal, vCodBarras);
+    else
+		select 'Já Existe';
+	end if;
 end $$
 
 call spInsertForn('Revenda Chico Loco', 1245678937123, 11934567897);
@@ -307,6 +320,12 @@ call spInsertCliPJ('Semgrana', 12345678912347, 98765432100, 12345060, 'Rua dos A
 call spInsertCliPJ('Cemreais', 12345678912348, 98765432101, 12345060, 'Rua dos Amores', 5024, 'Sala 23', 'Sei Lá', 'Recife', 'PE');
 call spInsertCliPJ('Durango', 12345678912349, 98765432102, 12345060, 'Rua dos Amores', 1254, null, 'Sei Lá', 'Recife', 'PE');
 
+call spInsertCompra(8459, 'Amoroso e Doce', '2018-05-01', 12345678910111, 22.22, 200, 700, 21944.00);
+call spInsertCompra(2482, 'Revenda Chico Loco', '2020-04-22', 12345678910112, 40.50, 180, 180, 7290.00);
+call spInsertCompra(21563, 'Marcelo Dedal', '2020-07-12', 12345678910113, 3.00, 300, 300, 900.00);
+call spInsertCompra(8459, 'Amoroso e Doce', '2020-12-04', 12345678910114, 35.00, 500, 700, 21944.00);
+call spInsertCompra(156354, 'Revenda Chico Loco', '2021-11-23', 12345687910115, 54.00, 350, 350, 18900.00);
+
 select * from tbCliente;
 select * from tbClientePF;
 select * from tbClientePJ;
@@ -316,3 +335,5 @@ select * from tbCidade;
 select * from tbBairro;
 select * from tbProduto;
 select * from tbFornecedor;
+select * from tbNotaFiscal;
+select * from tbItemCompra;
