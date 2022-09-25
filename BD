@@ -274,8 +274,8 @@ begin
 
 	if not exists (select NumeroVenda from tbVenda where NumeroVenda = vNumVenda) then
 		insert into tbVenda(IdCliente, NumeroVenda, DataVenda, TotalVenda, NotaFiscal) values (@IdCli, vNumVenda, @DataVenda, vTotalVenda, vNF);
-	end if;
         insert into tbItemVenda(NumeroVenda, CodBarras, Qtd, ValorItem) values (vNumVenda, @CodBarras, vQtd, vValorItem);
+	end if;
 end $$
 
 delimiter $$
@@ -293,6 +293,80 @@ begin
 		update tbVenda set NotaFiscal = vNF where IdCliente = @IdCli;
 	end if;
 end $$
+
+delimiter $$
+create procedure spDeleteProd(vCodBarras decimal(14,0))
+	begin
+		if exists (select CodBarras from tbProduto where CodBarras = vCodBarras) then
+			delete from tbProduto where CodBarras = vCodBarras;
+		end if;
+    end;
+$$
+
+delimiter $$
+create procedure spUpdateProd(vCodBarras decimal(14,0), vNome varchar(200), vValorUnitario decimal(6, 2))
+	begin
+		if exists (select CodBarras from tbProduto where CodBarras = vCodBarras) then
+			update tbProduto set Nome = vNome, ValorUnitario = vValorUnitario where CodBarras = vCodBarras;
+		end if;
+    end;
+$$
+
+delimiter $$ 
+create procedure spSelectProd()
+	begin
+		select * from tbProduto;
+	end;
+$$
+
+create table tbProdHistorico like tbProduto;
+describe tbProdHistorico;
+
+-- alterando a historico do produto
+alter table tbProdHistorico modify CodBarras decimal(14,0) not null;
+
+alter table tbProdHistorico add Atualizacao datetime;
+alter table tbProdHistorico add Situacao varchar(20);
+
+alter table tbProdHistorico drop primary key;
+alter table tbProdHistorico add
+	constraint pk_tbProdHistorico primary key (CodBarras, Atualizacao, Situacao);
+
+-- criando trigger
+delimiter $$
+	create trigger tgrHistoricoInsert after insert on tbProduto
+		for each row
+	begin
+	 insert into tbProdHistorico
+     set CodBarras = new.CodBarras,
+		 Qtd = new.Qtd, 
+         Nome = new.Nome,
+         ValorUnitario = new.ValorUnitario,
+         Atualizacao = current_timestamp(),
+         Situacao = 'Novo';
+	end;
+$$
+
+delimiter $$
+	create trigger tgrHistoricoUpdate after update on tbProduto
+		for each row
+	begin
+		insert into tbProdHistorico
+			set CodBarras = old.CodBarras,
+				Qtd = old.Qtd, 
+				Nome = old.Nome,
+				ValorUnitario = old.ValorUnitario,
+				Atualizacao = current_timestamp(),
+				Situacao = 'Atualização';
+		insert into tbProdHistorico
+			set CodBarras = new.CodBarras,
+				Qtd = new.Qtd, 
+				Nome = new.Nome,
+				ValorUnitario = new.ValorUnitario,
+				Atualizacao = current_timestamp(),
+				Situacao = 'Atualizado';
+	end;
+$$
 
 -- chamando os atalhos
 call spInsertForn('Revenda Chico Loco', 1245678937123, 11934567897);
@@ -365,6 +439,22 @@ call spInsertVenda(3, 'Pimpão', '22/08/2022', 12345678910113, 44.00, 1, 44.00, 
 call spInsertNF(359, 'Pimpão', '29/08/2022');
 call spInsertNF(360, 'Lança Perfume', '29/08/2022');
 
+call spInsertProduto(12345678910130, 'Camiseta de Poliéster', 35.61, 100);
+call spInsertProduto(12345678910131, 'Blusa Frio Moletom', 200.00, 100);
+call spInsertProduto(12345678910132, 'Vestido Decote Redondo', 144.00, 50);
+
+call spDeleteProd(12345678910116);
+call spDeleteProd(12345678910117);
+
+call spUpdateProd(12345678910111, 'Rei de Papel Mache', 64.50);
+call spUpdateProd(12345678910112, 'Bolinha de Sabão', 120.00);
+call spUpdateProd(12345678910113, 'Carro Bate Bate', 64.00);
+
+call spInsertProduto(12345678910119, 'Água mineral', 1.99, 500);
+call spUpdateProd(12345678910119, 'Água mineral', 2.99);
+
+call spInsertVenda(2, 'Disney Chaplin', '19/09/2022', 12345678910111, 64.50, 1, 64.50, null);
+
 -- selecionando tabelas
 select * from tbCliente;
 select * from tbClientePF;
@@ -380,3 +470,76 @@ select * from tbCompra;
 select * from tbVenda;
 select * from tbItemVenda;
 select * from tbNotaFiscal;
+
+/* call spInsertProduto("12345678910130","Camiseta de poliéster","35.61","100");
+call spInsertProduto("12345678910131","Blusa de frio Moletom","200.00","100");
+call spInsertProduto("12345678910132","Vestido Decote Redondo","144.00","50");
+
+
+delimiter $$
+create procedure spDeleteProduto (vCodBarras decimal(14,0))
+begin
+	if exists (select CodBarras from tbProduto where CodBarras = vCodBarras) then
+		delete from tbProduto where CodBarras = vCodBarras;
+    else
+		select "O produto inserido não esxiste";
+    end if;
+end $$
+
+call spDeleteProduto("12345678910116");
+call spDeleteProduto("12345678910117");
+
+select * from tbProduto;
+
+delimiter %%
+create procedure spUpdatePtod (vCodBarras decimal(14,0), vNome varchar(200), vValor decimal(6,2))
+begin 
+	if exists (SELECT codBarras from tbProduto where CodBarras = vCodBarras) THEN
+		update tbProduto set Nome = vNome, ValorUnitario = vValor where CodBarras = vCodBarras;
+    ELSE
+    SELECT "O produto não existe";
+    END IF;
+end %%
+
+call spUpdatePtod("12345678910111","Rei de Papel Mache","64.50");
+call spUpdatePtod("12345678910112","Bolinha de Sabão","120.00");
+call spUpdatePtod("12345678910113","Carro Bate Bate","64.00");
+
+select * from tbProduto;
+
+delimiter $$ 
+create procedure spSelectProduto(vCodBarras decimal(14,0))
+begin
+	if exists (SELECT codBarras from tbProduto where CodBarras = vCodBarras) THEN
+	select * from tbProduto WHERE CodBarras = vCodBarras;
+    else 
+    select "o produto não existe";
+    end if;
+END $$
+
+call spSelectProduto();
+
+create table tb_ProdutoHistorico like tbProduto;
+
+ALTER TABLE tb_ProdutoHistorico ADD COLUMN Ocorrencia varchar(20);
+ALTER TABLE tb_ProdutoHistorico ADD COLUMN Atualizacao datetime; 
+
+ALTER TABLE tb_ProdutoHistorico drop primary key;
+ALTER TABLE tb_ProdutoHistorico add constraint pk_prodHist PRIMARY KEY(CodBarras, Ocorrencia, Atualizacao);
+
+describe tb_ProdutoHistorico;
+select * from tb_ProdutoHistorico;
+
+delimiter //
+create trigger tragInsertProdHist after insert on tbProduto for each row
+begin 
+	INSERT INTO tb_ProdutoHistorico SET 
+    CodBarras = new.CodBarras,
+	Qtd = new.Qtd,
+	Nome = new.Nome,
+	ValorUnitario = new.ValorUnitario,
+    Ocorrencia = "Novo",
+    Atualizacao = current_timestamp();
+end; //
+
+call spInsertProduto("12345678910119","Agua Mineral","1.99","500"); */
